@@ -14,11 +14,11 @@ public class GameRunner
     {
         Game aGame = new Game();
 
-        aGame.add("Chet");
-        aGame.add("Pat");
-        aGame.add("Sue");
+        aGame.AddPlayer("Chet");
+        aGame.AddPlayer("Pat");
+        aGame.AddPlayer("Sue");
 
-        Random rand = new Random();
+        Random rand = new Random(1234);
 
         do
         {

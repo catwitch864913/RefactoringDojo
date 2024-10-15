@@ -1,18 +1,13 @@
 ﻿// Refactoring Playlist: https://www.youtube.com/playlist?list=PLv3bW4BDh6I8tg1LSJoB7Ioz64s8Bcufz
 // By: ITsLifeOverAll, https://github.com/ITsLifeOverAll
 
+using Trivia;
+
 namespace UglyTrivia;
 
 public class Game
 {
-
-
-    List<string> players = new List<string>();
-
-    int[] places = new int[6];
-    int[] purses = new int[6];
-
-    bool[] inPenaltyBox = new bool[6];
+    List<Player> players = new();
 
     LinkedList<string> popQuestions = new LinkedList<string>();
     LinkedList<string> scienceQuestions = new LinkedList<string>();
@@ -21,6 +16,8 @@ public class Game
 
     int currentPlayer = 0;
     bool isGettingOutOfPenaltyBox;
+
+    public Player CurrentPlayer => players[currentPlayer];
 
     public Game()
     {
@@ -43,14 +40,9 @@ public class Game
         return (howManyPlayers() >= 2);
     }
 
-    public bool add(String playerName)
+    public bool AddPlayer(String playerName)
     {
-
-
-        players.Add(playerName);
-        places[howManyPlayers()] = 0;
-        purses[howManyPlayers()] = 0;
-        inPenaltyBox[howManyPlayers()] = false;
+        players.Add(new Player(playerName));
 
         Console.WriteLine(playerName + " was added");
         Console.WriteLine("They are player number " + players.Count);
@@ -64,42 +56,41 @@ public class Game
 
     public void roll(int roll)
     {
-        Console.WriteLine(players[currentPlayer] + " is the current player");
+        Console.WriteLine(CurrentPlayer.Name + " is the current player");
         Console.WriteLine("They have rolled a " + roll);
 
-        if (inPenaltyBox[currentPlayer])
+        if (CurrentPlayer.InPenaltyBox)
         {
             if (roll % 2 != 0)
             {
                 isGettingOutOfPenaltyBox = true;
 
-                Console.WriteLine(players[currentPlayer] + " is getting out of the penalty box");
-                places[currentPlayer] = places[currentPlayer] + roll;
-                if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
+                Console.WriteLine(CurrentPlayer.Name + " is getting out of the penalty box");
+                CurrentPlayer.Place += roll;
+                // if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
+                CurrentPlayer.Place %= 12;
 
-                Console.WriteLine(players[currentPlayer]
+                Console.WriteLine(CurrentPlayer.Name
                                   + "'s new location is "
-                                  + places[currentPlayer]);
-                Console.WriteLine("The category is " + currentCategory());
+                                  + CurrentPlayer.Place);
+                Console.WriteLine("The category is " + CurrentCategory());
                 askQuestion();
             }
             else
             {
-                Console.WriteLine(players[currentPlayer] + " is not getting out of the penalty box");
+                Console.WriteLine(CurrentPlayer.Name + " is not getting out of the penalty box");
                 isGettingOutOfPenaltyBox = false;
             }
-
         }
         else
         {
+            CurrentPlayer.Place += roll;
+            CurrentPlayer.Place %= 12;
 
-            places[currentPlayer] = places[currentPlayer] + roll;
-            if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
-
-            Console.WriteLine(players[currentPlayer]
+            Console.WriteLine(CurrentPlayer.Name
                               + "'s new location is "
-                              + places[currentPlayer]);
-            Console.WriteLine("The category is " + currentCategory());
+                              + CurrentPlayer.Place);
+            Console.WriteLine("The category is " + CurrentCategory());
             askQuestion();
         }
 
@@ -107,22 +98,22 @@ public class Game
 
     private void askQuestion()
     {
-        if (currentCategory() == "Pop")
+        if (CurrentCategory() == "Pop")
         {
             Console.WriteLine(popQuestions.First());
             popQuestions.RemoveFirst();
         }
-        if (currentCategory() == "Science")
+        if (CurrentCategory() == "Science")
         {
             Console.WriteLine(scienceQuestions.First());
             scienceQuestions.RemoveFirst();
         }
-        if (currentCategory() == "Sports")
+        if (CurrentCategory() == "Sports")
         {
             Console.WriteLine(sportsQuestions.First());
             sportsQuestions.RemoveFirst();
         }
-        if (currentCategory() == "Rock")
+        if (CurrentCategory() == "Rock")
         {
             Console.WriteLine(rockQuestions.First());
             rockQuestions.RemoveFirst();
@@ -130,31 +121,41 @@ public class Game
     }
 
 
-    private String currentCategory()
+    private String CurrentCategory()
     {
-        if (places[currentPlayer] == 0) return "Pop";
-        if (places[currentPlayer] == 4) return "Pop";
-        if (places[currentPlayer] == 8) return "Pop";
-        if (places[currentPlayer] == 1) return "Science";
-        if (places[currentPlayer] == 5) return "Science";
-        if (places[currentPlayer] == 9) return "Science";
-        if (places[currentPlayer] == 2) return "Sports";
-        if (places[currentPlayer] == 6) return "Sports";
-        if (places[currentPlayer] == 10) return "Sports";
-        return "Rock";
+        var category = CurrentPlayer.Place switch
+        {
+            var n when (n %= 4) == 0 => "Pop",
+            var n when (n %= 4) == 1 => "Science",
+            var n when (n %= 4) == 2 => "Sports",
+            var n when (n %= 4) == 3 => "Rock",
+        };
+        return category;
+        // if (places[currentPlayer] == 0) return "Pop";
+        // if (places[currentPlayer] == 4) return "Pop";
+        // if (places[currentPlayer] == 8) return "Pop";
+
+        // if (places[currentPlayer] == 1) return "Science";
+        // if (places[currentPlayer] == 5) return "Science";
+        // if (places[currentPlayer] == 9) return "Science";
+
+        // if (places[currentPlayer] == 2) return "Sports";
+        // if (places[currentPlayer] == 6) return "Sports";
+        // if (places[currentPlayer] == 10) return "Sports";
+        // return "Rock";
     }
 
     public bool wasCorrectlyAnswered()
     {
-        if (inPenaltyBox[currentPlayer])
+        if (CurrentPlayer.InPenaltyBox)
         {
             if (isGettingOutOfPenaltyBox)
             {
                 Console.WriteLine("Answer was correct!!!!");
-                purses[currentPlayer]++;
-                Console.WriteLine(players[currentPlayer]
+                CurrentPlayer.Purse++;
+                Console.WriteLine(CurrentPlayer.Name
                                   + " now has "
-                                  + purses[currentPlayer]
+                                  + CurrentPlayer.Purse
                                   + " Gold Coins.");
 
                 bool winner = didPlayerWin();
@@ -177,10 +178,10 @@ public class Game
         {
 
             Console.WriteLine("Answer was corrent!!!!");
-            purses[currentPlayer]++;
-            Console.WriteLine(players[currentPlayer]
+            CurrentPlayer.Purse++;
+            Console.WriteLine(CurrentPlayer.Name
                               + " now has "
-                              + purses[currentPlayer]
+                              + CurrentPlayer.Purse
                               + " Gold Coins.");
 
             bool winner = didPlayerWin();
@@ -194,8 +195,8 @@ public class Game
     public bool wrongAnswer()
     {
         Console.WriteLine("Question was incorrectly answered");
-        Console.WriteLine(players[currentPlayer] + " was sent to the penalty box");
-        inPenaltyBox[currentPlayer] = true;
+        Console.WriteLine(CurrentPlayer.Name + " was sent to the penalty box");
+        CurrentPlayer.InPenaltyBox = true;
 
         currentPlayer++;
         if (currentPlayer == players.Count) currentPlayer = 0;
@@ -205,6 +206,6 @@ public class Game
 
     private bool didPlayerWin()
     {
-        return !(purses[currentPlayer] == 6);
+        return CurrentPlayer.Purse != 6;
     }
 }
