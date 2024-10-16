@@ -7,32 +7,17 @@ namespace UglyTrivia;
 
 public class Game
 {
-    List<Player> players = new();
-
-    LinkedList<string> popQuestions = new LinkedList<string>();
-    LinkedList<string> scienceQuestions = new LinkedList<string>();
-    LinkedList<string> sportsQuestions = new LinkedList<string>();
-    LinkedList<string> rockQuestions = new LinkedList<string>();
-
-    int currentPlayer = 0;
-    bool isGettingOutOfPenaltyBox;
+    private List<Player> players = new();
+    private int currentPlayer = 0;
+    private bool isGettingOutOfPenaltyBox;
+    private readonly Questions questions;
 
     public Player CurrentPlayer => players[currentPlayer];
 
     public Game()
     {
-        for (int i = 0; i < 50; i++)
-        {
-            popQuestions.AddLast("Pop Question " + i);
-            scienceQuestions.AddLast(("Science Question " + i));
-            sportsQuestions.AddLast(("Sports Question " + i));
-            rockQuestions.AddLast(createRockQuestion(i));
-        }
-    }
-
-    public String createRockQuestion(int index)
-    {
-        return "Rock Question " + index;
+        var list = Enum.GetValues(typeof(QuestionType)).Cast<QuestionType>().ToList();
+        questions = new Questions(list);
     }
 
     public bool isPlayable()
@@ -74,7 +59,7 @@ public class Game
                                   + "'s new location is "
                                   + CurrentPlayer.Place);
                 Console.WriteLine("The category is " + CurrentCategory());
-                askQuestion();
+                AskQuestion();
             }
             else
             {
@@ -91,44 +76,27 @@ public class Game
                               + "'s new location is "
                               + CurrentPlayer.Place);
             Console.WriteLine("The category is " + CurrentCategory());
-            askQuestion();
+            AskQuestion();
         }
 
     }
 
-    private void askQuestion()
+    private void AskQuestion()
     {
-        if (CurrentCategory() == "Pop")
-        {
-            Console.WriteLine(popQuestions.First());
-            popQuestions.RemoveFirst();
-        }
-        if (CurrentCategory() == "Science")
-        {
-            Console.WriteLine(scienceQuestions.First());
-            scienceQuestions.RemoveFirst();
-        }
-        if (CurrentCategory() == "Sports")
-        {
-            Console.WriteLine(sportsQuestions.First());
-            sportsQuestions.RemoveFirst();
-        }
-        if (CurrentCategory() == "Rock")
-        {
-            Console.WriteLine(rockQuestions.First());
-            rockQuestions.RemoveFirst();
-        }
+        var question = questions.TakeQuestion(CurrentCategory());
+        Console.WriteLine(question);
     }
 
 
-    private String CurrentCategory()
+    private QuestionType CurrentCategory()
     {
         var category = CurrentPlayer.Place switch
         {
-            var n when (n %= 4) == 0 => "Pop",
-            var n when (n %= 4) == 1 => "Science",
-            var n when (n %= 4) == 2 => "Sports",
-            var n when (n %= 4) == 3 => "Rock",
+            var n when (n %= 4) == 0 => QuestionType.Pop,
+            var n when (n %= 4) == 1 => QuestionType.Science,
+            var n when (n %= 4) == 2 => QuestionType.Sports,
+            var n when (n %= 4) == 3 => QuestionType.Rock,
+            _ => throw new Exception("Invalid category")
         };
         return category;
         // if (places[currentPlayer] == 0) return "Pop";
